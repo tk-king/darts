@@ -73,32 +73,32 @@ class CrossEntropyLabelSmooth(nn.Module):
 
 
 def main():
-  if not torch.cuda.is_available():
-    logging.info('no gpu device available')
-    sys.exit(1)
+  # if not torch.cuda.is_available():
+  #   logging.info('no gpu device available')
+  #   sys.exit(1)
 
   np.random.seed(args.seed)
-  torch.cuda.set_device(args.gpu)
+  #   torch.cuda.set_device(args.gpu)
   cudnn.benchmark = True
   torch.manual_seed(args.seed)
   cudnn.enabled=True
-  torch.cuda.manual_seed(args.seed)
+  # torch.cuda.manual_seed(args.seed)
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
   genotype = eval("genotypes.%s" % args.arch)
   model = Network(args.init_channels, CLASSES, args.layers, args.auxiliary, genotype)
   if args.parallel:
-    model = nn.DataParallel(model).cuda()
+    model = nn.DataParallel(model).cpu()
   else:
-    model = model.cuda()
+    model = model.cpu()
 
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 
   criterion = nn.CrossEntropyLoss()
-  criterion = criterion.cuda()
+  criterion = criterion.cpu()
   criterion_smooth = CrossEntropyLabelSmooth(CLASSES, args.label_smooth)
-  criterion_smooth = criterion_smooth.cuda()
+  criterion_smooth = criterion_smooth.cpu()
 
   optimizer = torch.optim.SGD(
     model.parameters(),
@@ -173,8 +173,8 @@ def train(train_queue, model, criterion, optimizer):
   model.train()
 
   for step, (input, target) in enumerate(train_queue):
-    target = target.cuda(async=True)
-    input = input.cuda()
+    target = target.cpu()
+    input = input.cpu()
     input = Variable(input)
     target = Variable(target)
 
@@ -208,8 +208,8 @@ def infer(valid_queue, model, criterion):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(async=True)
+    input = Variable(input, volatile=True).cpu()
+    target = Variable(target, volatile=True).cpu()
 
     logits, _ = model(input)
     loss = criterion(logits, target)

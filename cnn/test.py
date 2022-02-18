@@ -40,28 +40,28 @@ CIFAR_CLASSES = 10
 
 
 def main():
-  if not torch.cuda.is_available():
-    logging.info('no gpu device available')
-    sys.exit(1)
+  # if not torch.cuda.is_available():
+  #   logging.info('no gpu device available')
+  #   sys.exit(1)
 
   np.random.seed(args.seed)
-  torch.cuda.set_device(args.gpu)
+  #   torch.cuda.set_device(args.gpu)
   cudnn.benchmark = True
   torch.manual_seed(args.seed)
   cudnn.enabled=True
-  torch.cuda.manual_seed(args.seed)
+  # torch.cuda.manual_seed(args.seed)
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
   genotype = eval("genotypes.%s" % args.arch)
   model = Network(args.init_channels, CIFAR_CLASSES, args.layers, args.auxiliary, genotype)
-  model = model.cuda()
+  model = model.cpu()
   utils.load(model, args.model_path)
 
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 
   criterion = nn.CrossEntropyLoss()
-  criterion = criterion.cuda()
+  criterion = criterion.cpu()
 
   _, test_transform = utils._data_transforms_cifar10(args)
   test_data = dset.CIFAR10(root=args.data, train=False, download=True, transform=test_transform)
@@ -81,8 +81,8 @@ def infer(test_queue, model, criterion):
   model.eval()
 
   for step, (input, target) in enumerate(test_queue):
-    input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(async=True)
+    input = Variable(input, volatile=True).cpu()
+    target = Variable(target, volatile=True).cpu()
 
     logits, _ = model(input)
     loss = criterion(logits, target)

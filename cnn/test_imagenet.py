@@ -40,28 +40,28 @@ CLASSES = 1000
 
 
 def main():
-  if not torch.cuda.is_available():
-    logging.info('no gpu device available')
-    sys.exit(1)
+#   if not torch.cuda.is_available():
+#     logging.info('no gpu device available')
+#     sys.exit(1)
 
   np.random.seed(args.seed)
-  torch.cuda.set_device(args.gpu)
+  # #   torch.cuda.set_device(args.gpu)
   cudnn.benchmark = True
   torch.manual_seed(args.seed)
   cudnn.enabled=True
-  torch.cuda.manual_seed(args.seed)
+  # torch.cuda.manual_seed(args.seed)
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
   genotype = eval("genotypes.%s" % args.arch)
   model = Network(args.init_channels, CLASSES, args.layers, args.auxiliary, genotype)
-  model = model.cuda()
+  model = model.cpu()
   model.load_state_dict(torch.load(args.model_path)['state_dict'])
 
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 
   criterion = nn.CrossEntropyLoss()
-  criterion = criterion.cuda()
+  criterion = criterion.cpu()
 
   validdir = os.path.join(args.data, 'val')
   normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -90,8 +90,8 @@ def infer(valid_queue, model, criterion):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(async=True)
+    input = Variable(input, volatile=True).cpu()
+    target = Variable(target, volatile=True).cpu()
 
     logits, _ = model(input)
     loss = criterion(logits, target)
